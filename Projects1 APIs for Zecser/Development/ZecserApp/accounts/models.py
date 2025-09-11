@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from datetime import timedelta
+from django.utils import timezone
 
 # Choices for user role
 class UserRoles(models.TextChoices):
@@ -22,9 +24,6 @@ class User(AbstractUser):
         return f"{self.username} ({self.role})"
 
 
-
-
-
 # Job Seeker Profile (extra details)
 class JobSeekerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="jobseeker_profile")
@@ -45,3 +44,18 @@ class EmployerProfile(models.Model):
 
     def __str__(self):
         return f"Employer Profile: {self.company_name}"
+
+
+class PendingUser(models.Model):
+    email = models.EmailField(unique=True)
+    username = models.CharField(max_length=150)
+    password = models.CharField(max_length=255)  # store hashed
+    role = models.CharField(max_length=20, default="jobseeker")
+    otp = models.CharField(max_length=6)
+    otp_created_at = models.DateTimeField(auto_now_add=True) 
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_otp_valid(self):
+        expiry_time = self.otp_created_at + timedelta(seconds=30)
+        return timezone.now() <= expiry_time
+
