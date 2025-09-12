@@ -9,16 +9,27 @@ def generate_otp():
 def send_otp(email, otp):
     send_mail(
         "Your Zecser Verification Code",
-        f"Your OTP is {otp}. It will expire in 30 seconds.",
+        f"Your OTP is {otp}. It will expire in 10 minutes.",
         config("EMAIL_HOST_USER"),
         [email],
     )
     return otp
 
+
 def resend_otp(email, otp):
     send_mail(
         "Your Zecser New Verification Code",
-        f"Your OTP is {otp}. It will expire in 30 seconds.",
+        f"Your OTP is {otp}. It will expire in 10 minutes.",
+        config("EMAIL_HOST_USER"),
+        [email],
+    )
+    return otp
+
+
+def send_password_reset_otp(email, otp):
+    send_mail(
+        "Your Zecser Password Reset Code",
+        f"Your password reset OTP is {otp}. It will expire in 10 minutes.",
         config("EMAIL_HOST_USER"),
         [email],
     )

@@ -1,11 +1,13 @@
 from rest_framework import permissions
-from .models import User, PendingUser
+from .models import User, PendingUser, PasswordResetOTP
 from .serializers import UserSignupSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .utils import generate_otp, send_otp, resend_otp
+from .utils import generate_otp, send_otp, resend_otp, send_password_reset_otp
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import EmailTokenObtainPairSerializer
 
 
 
@@ -88,4 +90,104 @@ class ResendOTPView(APIView):
         resend_otp(email, otp)
 
         return Response({"message": "New OTP sent to your email."}, status=200)
+
+class EmailLoginView(TokenObtainPairView):
+    serializer_class = EmailTokenObtainPairSerializer
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]  # JWT required
+
+    def post(self, request):
+        user = request.user
+        old_password = request.data.get("oldPassword")
+        new_password = request.data.get("newPassword")
+        confirm_password = request.data.get("confirmPassword")
+
+        # Validate required fields
+        if not old_password:
+            return Response({"error": "oldPassword is required"}, status=400)
+
+        if not new_password or not confirm_password:
+            return Response({"error": "Both newPassword and confirmPassword are required"}, status=400)
+
+        # Check confirm password
+        if confirm_password != new_password:
+            return Response({"error": "confirmPassword and newPassword are not the same"}, status=400)
+
+        # Check old password
+        if not user.check_password(old_password):
+            return Response({"error": "Old password is incorrect"}, status=400)
+
+        # Update password
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"message": "Password updated successfully"}, status=200)
+
+
+class ForgotPasswordRequestView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "No account found with this email"}, status=400)
+
+        otp = generate_otp()
+        PasswordResetOTP.objects.create(user=user, otp=otp)
+        send_password_reset_otp(email, otp)
+        
+        return Response({"message": "OTP sent to your email"}, status=200)
+
+
+class ForgotPasswordOTPVerifyView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+
+        try:
+            user = User.objects.get(email=email)
+            reset_record = PasswordResetOTP.objects.filter(user=user, otp=otp).latest("created_at")
+        except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
+            return Response({"error": "Invalid email or OTP"}, status=400)
+
+        if not reset_record.is_valid():
+            return Response({"error": "OTP expired"}, status=400)
+
+        reset_record.verified = True
+        reset_record.save()
+
+        return Response({"message": "OTP verified successfully. You can now reset your password."}, status=200)
+
+
+class ForgotPasswordResetView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        new_password = request.data.get("newPassword")
+        confirm_password = request.data.get("confirmPassword")
+
+        if new_password != confirm_password:
+            return Response({"error": "Passwords do not match"}, status=400)
+
+        try:
+            user = User.objects.get(email=email)
+            reset_record = PasswordResetOTP.objects.filter(user=user, verified=True).latest("created_at")
+        except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
+            return Response({"error": "No verified OTP found"}, status=400)
+
+        # Extra check: OTP still within 10 mins
+        if not reset_record.is_valid():
+            return Response({"error": "OTP expired"}, status=400)
+
+        user.set_password(new_password)
+        user.save()
+
+        # Cleanup
+        reset_record.delete()
+
+        return Response({"message": "Password reset successfully"}, status=200)
 

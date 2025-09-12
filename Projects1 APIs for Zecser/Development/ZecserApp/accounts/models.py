@@ -56,6 +56,15 @@ class PendingUser(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def is_otp_valid(self):
-        expiry_time = self.otp_created_at + timedelta(seconds=30)
+        expiry_time = self.otp_created_at + timedelta(minutes=10)
         return timezone.now() <= expiry_time
 
+class PasswordResetOTP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified = models.BooleanField(default=False)
+
+    def is_valid(self):
+        expiry_time = self.created_at + timedelta(minutes=10)
+        return timezone.now() <= expiry_time
