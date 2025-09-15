@@ -29,6 +29,8 @@ class SignupView(APIView):
                 email=email,
                 username=serializer.validated_data["username"],
                 password=make_password(serializer.validated_data["password"]),
+                first_name=serializer.validated_data.get("first_name", ""),
+                last_name=serializer.validated_data.get("last_name", ""),
                 role=serializer.validated_data.get("role", "jobseeker"),
                 otp=otp
             )
@@ -62,6 +64,8 @@ class VerifyOTPView(APIView):
         user = User.objects.create(
             username=pending.username,
             email=pending.email,
+            first_name=pending.first_name,
+            last_name=pending.last_name,
             password=pending.password,
             role=pending.role,
         )

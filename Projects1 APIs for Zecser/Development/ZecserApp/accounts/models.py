@@ -9,47 +9,23 @@ class UserRoles(models.TextChoices):
     EMPLOYER = "employer", "Employer"
 
 class User(AbstractUser):
-    # Extra fields beyond Django's default (username, email, password, etc.)
+    """ "email, username, password, first_name, last_name" are inherited from AbstractUser """
     role = models.CharField(
         max_length=20,
         choices=UserRoles.choices,
         default=UserRoles.JOB_SEEKER
     )
-    phone = models.CharField(max_length=15, blank=True, null=True)
-    profile_picture = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
-    cover_picture = models.ImageField(upload_to="cover_picture/", blank=True, null=True)
-    bio = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.username} ({self.role})"
-
-
-# Job Seeker Profile (extra details)
-class JobSeekerProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="jobseeker_profile")
-    skills = models.TextField(blank=True, null=True)
-    location = models.CharField(max_length=100, blank=True, null=True)
-
-    def __str__(self):
-        return f"Job Seeker Profile: {self.user.username}"
-
-
-# Employer Profile (extra details)
-class EmployerProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="employer_profile")
-    company_name = models.CharField(max_length=255)
-    company_website = models.URLField(blank=True, null=True)
-    company_description = models.TextField(blank=True, null=True)
-    company_logo = models.ImageField(upload_to="company_logos/", blank=True, null=True)
-
-    def __str__(self):
-        return f"Employer Profile: {self.company_name}"
 
 
 class PendingUser(models.Model):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150)
     password = models.CharField(max_length=255)  # store hashed
+    first_name = models.CharField(("first name"), max_length=150, blank=True)
+    last_name = models.CharField(("last name"), max_length=150, blank=True)
     role = models.CharField(max_length=20, default="jobseeker")
     otp = models.CharField(max_length=6)
     otp_created_at = models.DateTimeField(auto_now_add=True) 
