@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.conf import settings
-from .models import Profile, JobSeekerProfile, EmployerProfile
+from .models import UserProfile, JobSeekerProfile, EmployerProfile
 
 User = settings.AUTH_USER_MODEL
 
@@ -10,7 +10,7 @@ User = settings.AUTH_USER_MODEL
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         # Create base Profile
-        profile = Profile.objects.create(user=instance)
+        profile = UserProfile.objects.create(user=instance)
 
         # Create role-specific profile
         if instance.role == "jobseeker":
