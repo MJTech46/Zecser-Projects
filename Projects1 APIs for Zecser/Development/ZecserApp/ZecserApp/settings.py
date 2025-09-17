@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # custom apps
     'accounts',
     'profiles',
+    'jobs',
 
     # 3rd party apps
     'rest_framework',
