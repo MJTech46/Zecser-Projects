@@ -1,8 +1,10 @@
 from rest_framework import generics, permissions
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from .models import UserProfile, CompanyProfile
 from .serializers import CompanyProfileSerializer
 from .serializers import ProfileSerializer
+
+
 
 # Get or update own profile
 class MyProfileView(generics.RetrieveUpdateAPIView):
@@ -36,22 +38,6 @@ class EmployerListView(generics.ListAPIView):
     def get_queryset(self):
         return UserProfile.objects.filter(user__role="employer")
 
-
-
-
-# Create a new company profile
-class CompanyCreateView(generics.CreateAPIView):
-    queryset = CompanyProfile.objects.all()
-    serializer_class = CompanyProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        user = self.request.user
-        if user.role != "employer":  # only employers allowed
-            raise ValidationError(
-                {"error": "Only employers can create a company profile."}
-            )
-        serializer.save(created_by=user)
 
 
 # Get all companies

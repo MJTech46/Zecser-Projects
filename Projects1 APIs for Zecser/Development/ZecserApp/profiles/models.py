@@ -26,11 +26,11 @@ class CompanyProfile(models.Model):
     founded_year = models.PositiveIntegerField(blank=True, null=True)
     employee_count = models.PositiveIntegerField(blank=True, null=True)
 
-    # Root/owner of the company
-    created_by = models.ForeignKey(
-        User,
+    # only "company" users can own companies
+    created_by = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="companies_created"
+        related_name="company_profile"
     )
 
     # Timestamps
@@ -52,10 +52,14 @@ class JobSeekerProfile(models.Model):
 
 
 class EmployerProfile(models.Model):
-    profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name="employer_profile")
+    profile = models.OneToOneField(
+        "profiles.UserProfile",
+        on_delete=models.CASCADE,
+        related_name="employer_profile"
+    )
     company = models.ForeignKey(
-        CompanyProfile,
-        on_delete=models.SET_NULL,   # if company gets deleted, employer remains
+        "profiles.CompanyProfile",
+        on_delete=models.SET_NULL,
         related_name="employers",
         null=True,
         blank=True
@@ -63,5 +67,6 @@ class EmployerProfile(models.Model):
 
     def __str__(self):
         if self.company:
-            return f"{self.profile.user.username} -> {self.company.company_name}"
-        return f"{self.profile.user.username} (No company yet)"
+            return f"{self.profile.user.username} works at {self.company.company_name}"
+        return f"{self.profile.user.username} (Independent Employer)"
+

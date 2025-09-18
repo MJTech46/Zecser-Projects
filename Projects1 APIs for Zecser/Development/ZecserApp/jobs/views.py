@@ -2,11 +2,11 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.utils import timezone
 from .models import JobPost, JobApplication
-from .serializers import JobPostSerializer, JobApplicationSerializer
-from profiles.models import EmployerProfile, JobSeekerProfile
+from .serializers import JobPostSerializer, JobApplicationSerializer, JobPostListSerializer
+from profiles.models import EmployerProfile, JobSeekerProfile, CompanyProfile
 
 
-# Create job post (Employers only)
+# Create job post (Employers or Companies)
 class JobPostCreateView(generics.CreateAPIView):
     queryset = JobPost.objects.all()
     serializer_class = JobPostSerializer
@@ -14,23 +14,35 @@ class JobPostCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if user.role != "employer":
-            return Response({"error": "Only employers can post jobs"}, status=403)
 
-        employer_profile = getattr(user.profile, "employer_profile", None)
-        if not employer_profile:
-            return Response({"error": "Employer profile not found"}, status=400)
+        # Company user posts a job
+        if user.role == "company":
+            company_profile = getattr(user, "company_profile", None)
+            if not company_profile:
+                return Response({"error": "Company profile not found"}, status=400)
 
-        serializer.save(
-            posted_by=employer_profile,
-            company=employer_profile.company
-        )
+            serializer.save(posted_by=user, company=company_profile)
+            return
+
+        # Employer posts a job
+        if user.role == "employer":
+            employer_profile = getattr(user.profile, "employer_profile", None)
+            if not employer_profile:
+                return Response({"error": "Employer profile not found"}, status=400)
+
+            serializer.save(
+                posted_by=user,
+                company=employer_profile.company
+            )
+            return
+
+        return Response({"error": "Only employers or companies can post jobs"}, status=403)
 
 
-# List all active jobs (Jobseekers see only active)
+# List all active jobs
 class JobPostListView(generics.ListAPIView):
-    serializer_class = JobPostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = JobPostListSerializer
+    permission_classes = [permissions.AllowAny]  # anyone can browse jobs
 
     def get_queryset(self):
         now = timezone.now()
@@ -52,10 +64,10 @@ class JobApplicationCreateView(generics.CreateAPIView):
         if not jobseeker_profile:
             return Response({"error": "Jobseeker profile not found"}, status=400)
 
-        serializer.save(applicant=jobseeker_profile)
+        serializer.save(applicant=user)
 
 
-# View job applications (only employer who posted, and only after deadline)
+# View job applications (Employer who posted OR Company owner)
 class JobApplicationListView(generics.ListAPIView):
     serializer_class = JobApplicationSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -70,25 +82,20 @@ class JobApplicationListView(generics.ListAPIView):
             return JobApplication.objects.none()
 
         # Employer who posted the job
-        if user.role == "employer" and job.posted_by.profile.user == user:
+        if user.role == "employer" and job.posted_by == user:
             return job.applications.all()
 
-        # Company creator (CEO/root)
-        if user.role == "employer" and job.company and job.company.created_by == user:
+        # Company owner
+        if user.role == "company" and job.company and job.company.created_by == user:
             return job.applications.all()
 
         return JobApplication.objects.none()
 
 
-from rest_framework import generics, permissions
-from .models import JobPost
-from .serializers import JobPostListSerializer
-
-
 # List jobs by company
 class JobPostsByCompanyView(generics.ListAPIView):
     serializer_class = JobPostListSerializer
-    permission_classes = [permissions.AllowAny]  # Job seekers can view
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         company_id = self.kwargs["company_id"]
@@ -103,4 +110,3 @@ class JobPostsByEmployerView(generics.ListAPIView):
     def get_queryset(self):
         employer_id = self.kwargs["employer_id"]
         return JobPost.objects.filter(posted_by_id=employer_id).order_by("-created_at")
-

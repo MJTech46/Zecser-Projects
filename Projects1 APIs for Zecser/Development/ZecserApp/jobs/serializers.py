@@ -3,9 +3,8 @@ from .models import JobPost, JobApplication
 
 
 class JobPostSerializer(serializers.ModelSerializer):
-    is_active = serializers.ReadOnlyField()
-    posted_by = serializers.ReadOnlyField(source="posted_by.profile.user.username")
-    company_name = serializers.ReadOnlyField(source="company.company_name")
+    company_name = serializers.CharField(source="company.company_name", read_only=True)
+    posted_by_username = serializers.CharField(source="posted_by.username", read_only=True)
 
     class Meta:
         model = JobPost
@@ -18,15 +17,29 @@ class JobPostSerializer(serializers.ModelSerializer):
             "salary_range",
             "deadline",
             "is_active",
-            "posted_by",
+            "company",
             "company_name",
+            "posted_by",           # keep it here
+            "posted_by_username",
             "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "is_active",
+            "company_name",
+            "posted_by",           # mark as read-only
+            "posted_by_username",
+            "created_at",
+            "updated_at",
         ]
 
 
+
+
 class JobApplicationSerializer(serializers.ModelSerializer):
-    applicant = serializers.ReadOnlyField(source="applicant.profile.user.username")
-    job_title = serializers.ReadOnlyField(source="job.title")
+    job_title = serializers.CharField(source="job.title", read_only=True)
+    applicant_username = serializers.CharField(source="applicant.username", read_only=True)
 
     class Meta:
         model = JobApplication
@@ -35,16 +48,33 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             "job",
             "job_title",
             "applicant",
+            "applicant_username",
             "cover_letter",
             "resume",
-            "applied_at",
+            "applied_at"
         ]
-        read_only_fields = ["id", "job_title", "applicant", "applied_at"]
+        read_only_fields = [
+            "id",
+            "job_title",
+            "applicant",          # mark applicant as read-only
+            "applicant_username",
+            "applied_at"
+        ]
+
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        if user.role != "jobseeker":
+            raise serializers.ValidationError("Only jobseekers can apply to jobs.")
+        validated_data["applicant"] = user
+        return super().create(validated_data)
+
 
 
 class JobPostListSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source="company.company_name", read_only=True)
     employer_username = serializers.CharField(source="posted_by.username", read_only=True)
+    applications_count = serializers.SerializerMethodField() 
 
     class Meta:
         model = JobPost
@@ -59,4 +89,8 @@ class JobPostListSerializer(serializers.ModelSerializer):
             "is_active",
             "company_name",
             "employer_username",
+            "applications_count",
         ]
+
+    def get_applications_count(self, obj):
+        return obj.applications.count()

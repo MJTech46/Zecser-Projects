@@ -7,6 +7,7 @@ from django.utils import timezone
 class UserRoles(models.TextChoices):
     JOB_SEEKER = "jobseeker", "Job Seeker"
     EMPLOYER = "employer", "Employer"
+    COMPANY = "company", "Company"
 
 class User(AbstractUser):
     """ "email, username, password, first_name, last_name" are inherited from AbstractUser """

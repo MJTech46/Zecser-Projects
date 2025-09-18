@@ -8,6 +8,12 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
         fields = ["skills", "location", "resume"]
 
 
+class EmployerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployerProfile
+        fields = ["company"]
+
+
 class CompanyProfileSerializer(serializers.ModelSerializer):
     created_by = serializers.ReadOnlyField(source="created_by.username")
 
@@ -29,30 +35,16 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_by", "created_at", "updated_at"]
 
 
-class EmployerProfileSerializer(serializers.ModelSerializer):
-    # show company details
-    company_details = CompanyProfileSerializer(source="company", read_only=True)
-    # allow only company ID editing
-    company = serializers.PrimaryKeyRelatedField(
-        queryset=CompanyProfile.objects.all(),
-        required=False,
-        allow_null=True
-    )
-
-    class Meta:
-        model = EmployerProfile
-        fields = ["id", "company", "company_details"]
-        read_only_fields = ["id"]
-
-
 class ProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source="user.first_name", required=False)
     last_name = serializers.CharField(source="user.last_name", required=False)
     role = serializers.CharField(source="user.role", read_only=True)
 
-    # Nested serializers
+    # Nested profiles
     jobseeker_profile = JobSeekerProfileSerializer(required=False)
     employer_profile = EmployerProfileSerializer(required=False)
+    company_profile = CompanyProfileSerializer(source="user.company_profile", required=False)
+
 
     class Meta:
         model = UserProfile
@@ -67,6 +59,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "cover_picture",
             "jobseeker_profile",
             "employer_profile",
+            "company_profile",   # added company profile
         ]
         read_only_fields = ["id"]
 
@@ -92,9 +85,43 @@ class ProfileSerializer(serializers.ModelSerializer):
                 setattr(instance.employer_profile, attr, value)
             instance.employer_profile.save()
 
+        # Update Company profile
+        company_data = validated_data.pop("user", {}).pop("company_profile", None)
+        if company_data and hasattr(instance.user, "company_profile"):
+            for attr, value in company_data.items():
+                setattr(instance.user.company_profile, attr, value)
+            instance.user.company_profile.save()
+
+
         # Update profile fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
         return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        # Flatten jobseeker profile
+        if data["role"] == "jobseeker" and data.get("jobseeker_profile"):
+            jobseeker_data = data.pop("jobseeker_profile")
+            data.update(jobseeker_data)
+            data.pop("employer_profile", None)
+            data.pop("company_profile", None)
+
+        # Flatten employer profile
+        elif data["role"] == "employer" and data.get("employer_profile"):
+            employer_data = data.pop("employer_profile")
+            data.update(employer_data)
+            data.pop("jobseeker_profile", None)
+            data.pop("company_profile", None)
+
+        # Flatten company profile
+        elif data["role"] == "company" and data.get("company_profile"):
+            company_data = data.pop("company_profile")
+            data.update(company_data)
+            data.pop("jobseeker_profile", None)
+            data.pop("employer_profile", None)
+
+        return data
