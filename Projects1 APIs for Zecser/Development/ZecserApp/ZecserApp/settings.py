@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'accounts',
     'profiles',
     'jobs',
+    'events',
 
     # 3rd party apps
     'rest_framework',
