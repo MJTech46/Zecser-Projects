@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserProfile, JobSeekerProfile, EmployerProfile, CompanyProfile
+from .models import UserProfile, JobSeekerProfile, EmployerProfile, CompanyProfile, Follow
 
 
 class JobSeekerProfileSerializer(serializers.ModelSerializer):
@@ -15,6 +15,7 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
 
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source="user.id", read_only=True)
     created_by = serializers.ReadOnlyField(source="created_by.username")
 
     class Meta:
@@ -36,6 +37,7 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source="user.id", read_only=True)
     first_name = serializers.CharField(source="user.first_name", required=False)
     last_name = serializers.CharField(source="user.last_name", required=False)
     role = serializers.CharField(source="user.role", read_only=True)
@@ -125,3 +127,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             data.pop("employer_profile", None)
 
         return data
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    follower_username = serializers.ReadOnlyField(source="follower.username")
+    following_username = serializers.ReadOnlyField(source="following.username")
+
+    class Meta:
+        model = Follow
+        fields = ["id", "follower", "follower_username", "following", "following_username", "created_at"]
+        read_only_fields = ["id", "follower", "created_at"]

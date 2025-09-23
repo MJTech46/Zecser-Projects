@@ -1,9 +1,13 @@
-from rest_framework import generics, permissions
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError, PermissionDenied
-from .models import UserProfile, CompanyProfile
-from .serializers import CompanyProfileSerializer
-from .serializers import ProfileSerializer
+from rest_framework.response import Response
 
+from accounts.models import User
+from .models import UserProfile, CompanyProfile, Follow
+
+from .serializers import CompanyProfileSerializer
+from .serializers import ProfileSerializer, FollowSerializer
 
 
 # Get or update own profile
@@ -66,3 +70,66 @@ class CompanyUpdateView(generics.RetrieveUpdateAPIView):
         if company.created_by != self.request.user:
             raise PermissionDenied("Only the company creator can update this profile.")
         serializer.save()
+    
+
+class FollowUserView(generics.CreateAPIView):
+    serializer_class = FollowSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        following_id = kwargs.get("user_id")
+        following_user = get_object_or_404(User, id=following_id)
+
+        if request.user == following_user:
+            return Response({"error": "You cannot follow yourself."}, status=400)
+
+        follow, created = Follow.objects.get_or_create(
+            follower=request.user, following=following_user
+        )
+
+        if not created:
+            return Response({"message": "Already following"}, status=200)
+
+        return Response(FollowSerializer(follow).data, status=201)
+
+
+class UnfollowUserView(generics.DestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        following_id = kwargs.get("user_id")
+        following_user = get_object_or_404(User, id=following_id)
+
+        follow = Follow.objects.filter(follower=request.user, following=following_user)
+        if follow.exists():
+            follow.delete()
+            return Response({"message": "Unfollowed successfully"}, status=200)
+        return Response({"error": "Not following this user"}, status=400)
+
+
+class FollowerListView(generics.ListAPIView):
+    serializer_class = FollowSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        return Follow.objects.filter(following_id=user_id)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        followers_count = queryset.count()  # count followers
+
+        return Response({
+            "followers_count": followers_count,
+            "followers": serializer.data
+        })
+
+
+class FollowingListView(generics.ListAPIView):
+    serializer_class = FollowSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        return Follow.objects.filter(follower_id=user_id)

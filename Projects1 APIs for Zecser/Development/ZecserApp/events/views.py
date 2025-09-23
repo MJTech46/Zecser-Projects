@@ -1,7 +1,8 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status 
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response 
 from .models import Event
-from .serializers import EventSerializer, EventCreateUpdateSerializer
+from .serializers import EventSerializer, EventCreateUpdateSerializer, EventImage
 
 
 # List events (all users can view)
@@ -37,3 +38,16 @@ class EventUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
         kwargs['partial'] = True   # allow partial updates
         return super().update(request, *args, **kwargs)
 
+class EventImageDeleteView(generics.DestroyAPIView):
+    queryset = EventImage.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_destroy(self, instance):
+        if instance.event.posted_by != self.request.user:
+            raise PermissionDenied("You can only delete images from your own events.")
+        instance.delete()
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"message": "Image deleted successfully."}, status=status.HTTP_200_OK)
