@@ -29,3 +29,21 @@ class EventImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.event.title}"
+
+class EventReaction(models.Model):
+    REACTION_CHOICES = (
+        ("like", "Like"),
+        ("dislike", "Dislike"),
+    )
+
+    event = models.ForeignKey("Event", on_delete=models.CASCADE, related_name="reactions")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="event_reactions")
+    reaction = models.CharField(max_length=10, choices=REACTION_CHOICES)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("event", "user")  # prevent multiple reactions per event per user
+
+    def __str__(self):
+        return f"{self.user.username} {self.reaction} {self.event.title}"

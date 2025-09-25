@@ -1,8 +1,11 @@
 from rest_framework import generics, permissions, status 
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response 
-from .models import Event
+from .models import Event, EventReaction
 from .serializers import EventSerializer, EventCreateUpdateSerializer, EventImage
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 
 
 # List events (all users can view)
@@ -51,3 +54,61 @@ class EventImageDeleteView(generics.DestroyAPIView):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({"message": "Image deleted successfully."}, status=status.HTTP_200_OK)
+    
+
+class EventLikeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, event_id):
+        event = get_object_or_404(Event, id=event_id)
+
+        # Check if user already liked
+        existing_reaction = EventReaction.objects.filter(event=event, user=request.user).first()
+
+        if existing_reaction and existing_reaction.reaction == "like":
+            # Toggle off like
+            existing_reaction.delete()
+            message = "Like removed"
+        else:
+            # Remove any dislike and add like
+            EventReaction.objects.filter(event=event, user=request.user, reaction="dislike").delete()
+            EventReaction.objects.update_or_create(
+                event=event, user=request.user,
+                defaults={"reaction": "like"}
+            )
+            message = "Event liked"
+
+        return Response({
+            "message": message,
+            "like_count": event.reactions.filter(reaction="like").count(),
+            "dislike_count": event.reactions.filter(reaction="dislike").count()
+        }, status=status.HTTP_200_OK)
+
+
+class EventDislikeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, event_id):
+        event = get_object_or_404(Event, id=event_id)
+
+        # Check if user already disliked
+        existing_reaction = EventReaction.objects.filter(event=event, user=request.user).first()
+
+        if existing_reaction and existing_reaction.reaction == "dislike":
+            # Toggle off dislike
+            existing_reaction.delete()
+            message = "Dislike removed"
+        else:
+            # Remove any like and add dislike
+            EventReaction.objects.filter(event=event, user=request.user, reaction="like").delete()
+            EventReaction.objects.update_or_create(
+                event=event, user=request.user,
+                defaults={"reaction": "dislike"}
+            )
+            message = "Event disliked"
+
+        return Response({
+            "message": message,
+            "like_count": event.reactions.filter(reaction="like").count(),
+            "dislike_count": event.reactions.filter(reaction="dislike").count()
+        }, status=status.HTTP_200_OK)

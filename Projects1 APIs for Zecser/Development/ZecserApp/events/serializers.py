@@ -10,6 +10,8 @@ class EventImageSerializer(serializers.ModelSerializer):
 
 class EventSerializer(serializers.ModelSerializer):
     images = EventImageSerializer(many=True, read_only=True)
+    like_count = serializers.SerializerMethodField()
+    dislike_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
@@ -22,10 +24,19 @@ class EventSerializer(serializers.ModelSerializer):
             "end_date",
             "posted_by",
             "images",
+            "like_count",
+            "dislike_count",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "posted_by", "created_at", "updated_at"]
+
+    def get_like_count(self, obj):
+        return obj.reactions.filter(reaction="like").count()
+
+    def get_dislike_count(self, obj):
+        return obj.reactions.filter(reaction="dislike").count()
+
 
 
 class EventCreateUpdateSerializer(serializers.ModelSerializer):
