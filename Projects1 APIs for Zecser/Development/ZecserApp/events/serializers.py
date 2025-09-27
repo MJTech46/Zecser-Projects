@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Event, EventImage
+from .models import Event, EventImage, EventComment
 
 
 class EventImageSerializer(serializers.ModelSerializer):
@@ -12,6 +12,8 @@ class EventSerializer(serializers.ModelSerializer):
     images = EventImageSerializer(many=True, read_only=True)
     like_count = serializers.SerializerMethodField()
     dislike_count = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()
+    posted_by_username = serializers.CharField(source="posted_by.username", read_only=True)
 
     class Meta:
         model = Event
@@ -23,19 +25,34 @@ class EventSerializer(serializers.ModelSerializer):
             "start_date",
             "end_date",
             "posted_by",
+            "posted_by_username",
             "images",
             "like_count",
             "dislike_count",
+            "comment_count",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "posted_by", "created_at", "updated_at"]
+        read_only_fields = [
+            "id", 
+            "posted_by", 
+            "created_at", 
+            "updated_at", 
+            "like_count", 
+            "dislike_count", 
+            "comments", 
+            "posted_by_username"
+        ]
 
     def get_like_count(self, obj):
         return obj.reactions.filter(reaction="like").count()
 
     def get_dislike_count(self, obj):
         return obj.reactions.filter(reaction="dislike").count()
+
+    def get_comment_count(self, obj):
+        return obj.comments.count()
+
 
 
 
@@ -82,3 +99,11 @@ class EventCreateUpdateSerializer(serializers.ModelSerializer):
                 EventImage.objects.create(event=instance, image=image)
 
         return instance
+
+class EventCommentSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField(source="user.username")
+
+    class Meta:
+        model = EventComment
+        fields = ["id", "event", "user", "username", "content", "created_at", "updated_at"]
+        read_only_fields = ["id", "event", "user", "username", "created_at", "updated_at"]

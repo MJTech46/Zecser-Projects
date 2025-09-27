@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions, status 
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response 
-from .models import Event, EventReaction
-from .serializers import EventSerializer, EventCreateUpdateSerializer, EventImage
+from .models import Event, EventReaction, EventComment
+from .serializers import EventSerializer, EventCreateUpdateSerializer, EventImage, EventCommentSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
@@ -112,3 +112,47 @@ class EventDislikeView(APIView):
             "like_count": event.reactions.filter(reaction="like").count(),
             "dislike_count": event.reactions.filter(reaction="dislike").count()
         }, status=status.HTTP_200_OK)
+
+# List + Create Comments
+class EventCommentListCreateView(generics.ListCreateAPIView):
+    serializer_class = EventCommentSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        event_id = self.kwargs["event_id"]
+        return EventComment.objects.filter(event_id=event_id).order_by("-created_at")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            "comment_count": queryset.count(),  
+            "comments": serializer.data
+        })
+
+    def perform_create(self, serializer):
+        event_id = self.kwargs["event_id"]
+        event = get_object_or_404(Event, id=event_id)
+        serializer.save(user=self.request.user, event=event)
+
+
+
+# Update + Delete Comment
+class EventCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = EventComment.objects.all()
+    serializer_class = EventCommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_update(self, serializer):
+        comment = self.get_object()
+        if comment.user != self.request.user:
+            raise PermissionDenied("You can only edit your own comments.")
+        serializer.save()
+
+    def delete(self, request, *args, **kwargs):
+        comment = self.get_object()
+        if comment.user != self.request.user and comment.event.posted_by != self.request.user:
+            raise PermissionDenied("Only the comment owner or event owner can delete this comment.")
+        comment.delete()
+        return Response({"message": "Comment deleted successfully."}, status=200)
+
