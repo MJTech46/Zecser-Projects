@@ -1,29 +1,24 @@
-// src/pages/Signup.jsx
-import React, { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+// src/pages/Login.jsx
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
 
-const Signup = () => {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = () => {
-    alert('Sign-up form submitted (frontend only)');
+    alert("Sign-up form submitted (frontend only)");
   };
 
   const location = useLocation();
-  const activeTab = location.pathname === "/signup" ? "signup" : "login";
-
+  const activeTab = location.pathname === "/login" ? "login" : "signup";
+  
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-2">
       <div className="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col justify-between h-[90vh] max-h-[750px]">
-
         {/* Logo */}
         <div className="text-center py-4">
           <h1 className="text-3xl font-bold text-gray-900">Logo</h1>
@@ -56,21 +51,13 @@ const Signup = () => {
 
         {/* Form */}
         <div className="px-6 flex-grow overflow-y-auto pb-4 scrollbar-hide">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Create an account</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-1">
+            Welcome back!
+          </h2>
           <p className="text-gray-600 mb-4 text-sm">
-            Build your profile, connect with peers, and discover jobs.
+            Login to your account to connect with professionals and explore
+            opportunities
           </p>
-
-          {/* Full Name */}
-          <div className="mb-3">
-            <label className="block text-sm text-gray-400 mb-1">Full Name</label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
 
           {/* Email */}
           <div className="mb-3">
@@ -85,10 +72,13 @@ const Signup = () => {
 
           {/* Password */}
           <div className="mb-3">
-            <label className="block text-sm text-gray-400 mb-1">Password</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm text-gray-400">Password</label>
+            </div>
+
             <div className="relative">
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -98,58 +88,35 @@ const Signup = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
+            <a
+              href="#"
+              className="text-blue-600 text-sm underline float-right p-2"
+            >
+              Forgot Password?
+            </a>
           </div>
 
-          {/* Confirm Password */}
-          <div className="mb-3">
-            <label className="block text-sm text-gray-400 mb-1">Confirm Password</label>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-              >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Terms */}
-          <div className="flex items-start gap-2 mb-4">
-            <input
-              type="checkbox"
-              checked={agreedToTerms}
-              onChange={(e) => setAgreedToTerms(e.target.checked)}
-              className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-            />
-            <label className="text-xs text-gray-700">
-              I agree to the Terms & Conditions and Privacy Policy
-            </label>
-          </div>
-
-          {/* Sign Up Button */}
+          {/* Login Button */}
           <button
             onClick={handleSignUp}
             disabled={loading}
             className={`w-full py-3 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 transition-colors mb-4 ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
+              loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {loading ? 'Signing Up...' : 'Sign Up'}
+            {loading ? "Logging In..." : "Login"}
           </button>
 
           {/* Social Login */}
           <div className="text-center">
-            <p className="text-gray-600 mb-6">Or Sign Up With</p>
+            <p className="text-gray-600 mb-6">Or Continue With</p>
             <div className="flex justify-center gap-8">
               {/* Google */}
               <button className="flex flex-col items-center gap-2">
@@ -204,10 +171,9 @@ const Signup = () => {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
 };
 
-export default Signup;
+export default Login;
