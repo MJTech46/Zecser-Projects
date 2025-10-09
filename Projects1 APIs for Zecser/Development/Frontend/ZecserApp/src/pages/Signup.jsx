@@ -22,10 +22,9 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-2">
-      <div className="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col justify-between h-[90vh] max-h-[750px]">
-
+      <div className="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col justify-between h-[95vh] max-h-[780px]">
         {/* Logo */}
-        <div className="text-center py-4">
+        <div className="text-center py-6 mt-2">
           <h1 className="text-3xl font-bold text-gray-900">Logo</h1>
         </div>
 
