@@ -4,6 +4,7 @@ import Login from "./pages/login";
 import ForgotPass from "./pages/ForgotPass";
 import ResetPass from "./pages/ResetPass";
 import UserProfile from "./pages/UserProfile";
+import CompanyProfile from "./pages/CompanyProfile";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/ForgotPass" element={<ForgotPass />} />
         <Route path="/ResetPass" element={<ResetPass />} />
         <Route path="/UserProfile" element={<UserProfile />} />
+        <Route path="/CompanyProfile" element={<CompanyProfile />} />
       </Routes>
     </Router>
   );
