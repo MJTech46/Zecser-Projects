@@ -11,6 +11,7 @@ from .views import (
     UnfollowUserView,
     FollowerListView,
     FollowingListView,
+    MyCompanyProfileView,
 )
 
 urlpatterns = [
@@ -22,6 +23,7 @@ urlpatterns = [
     path("company/", CompanyListView.as_view(), name="company-list"),             # list all companies
     path("company/<int:id>/", CompanyDetailView.as_view(), name="company-detail"),# get single company by ID
     path("company/<int:id>/update/", CompanyUpdateView.as_view(), name="company-update"),  # update company profile by ID
+    path("company/myprofile/", MyCompanyProfileView.as_view(), name="my-company-profile"),
 
     path("follow/<int:user_id>/", FollowUserView.as_view(), name="follow-user"),
     path("unfollow/<int:user_id>/", UnfollowUserView.as_view(), name="unfollow-user"),

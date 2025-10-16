@@ -15,17 +15,22 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
 
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source="user.id", read_only=True)
+    id = serializers.IntegerField(source="CompanyProfile.id", read_only=True)
+    email = serializers.EmailField(source="created_by.email", read_only=True)
     created_by = serializers.ReadOnlyField(source="created_by.username")
 
     class Meta:
         model = CompanyProfile
         fields = [
             "id",
+            "email",
             "company_name",
             "company_website",
             "company_description",
+            "company_overview",
+            "company_services",
             "company_logo",
+            "company_cover",
             "location",
             "founded_year",
             "employee_count",
@@ -38,6 +43,7 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source="user.id", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
     first_name = serializers.CharField(source="user.first_name", required=False)
     last_name = serializers.CharField(source="user.last_name", required=False)
     role = serializers.CharField(source="user.role", read_only=True)
@@ -54,6 +60,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "id",
             "first_name",
             "last_name",
+            "email",
             "role",
             "phone",
             "bio",
@@ -63,7 +70,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "employer_profile",
             "company_profile",   # added company profile
         ]
-        read_only_fields = ["id"]
+        read_only_fields = ["id"," email", "role"]
 
     def update(self, instance, validated_data):
         # Update user fields

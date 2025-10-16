@@ -25,14 +25,14 @@ class SignupView(APIView):
             otp = generate_otp()
             send_otp(email, otp)
 
-            PendingUser.objects.create(
+            # bypassing opt for now
+            User.objects.create(
                 email=email,
                 username=serializer.validated_data["username"],
                 password=make_password(serializer.validated_data["password"]),
                 first_name=serializer.validated_data.get("first_name", ""),
                 last_name=serializer.validated_data.get("last_name", ""),
                 role=serializer.validated_data.get("role", "jobseeker"),
-                otp=otp
             )
 
             return Response({"message": "OTP sent to email. Please verify."}, status=200)

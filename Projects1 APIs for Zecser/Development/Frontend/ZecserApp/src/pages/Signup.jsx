@@ -1,68 +1,121 @@
 // src/pages/Signup.jsx
-import React, { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Signup = () => {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [role, setRole] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSignUp = () => {
-    alert('Sign-up form submitted (frontend only)');
-  };
-
+  const navigate = useNavigate();
   const location = useLocation();
   const activeTab = location.pathname === "/signup" ? "signup" : "login";
 
+  const handleSignUp = async () => {
+    if (!fullName || !email || !password || !confirmPassword || !role) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    if (!agreedToTerms) {
+      alert("Please agree to the Terms & Conditions before signing up.");
+      return;
+    }
+
+    const [first_name, ...lastParts] = fullName.trim().split(" ");
+    const last_name = lastParts.join(" ");
+
+    const data = {
+      username: email.split("@")[0], // auto-generate username from email
+      first_name,
+      last_name,
+      email,
+      password,
+      role,
+    };
+
+    try {
+      setLoading(true);
+      const response = await fetch("http://127.0.0.1:8000/api/accounts/signup/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        alert("Signup successful!");
+        navigate("/login");
+      } else {
+        const errorData = await response.json();
+        alert(`Signup failed: ${JSON.stringify(errorData)}`);
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Something went wrong! Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-2">
-      <div className="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col justify-between h-[95vh] max-h-[780px]">
+      <div className="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col justify-between h-[100vh] max-h-[800px]">
         {/* Logo */}
         <div className="text-center py-6 mt-2">
           <h1 className="text-3xl font-bold text-gray-900">Logo</h1>
         </div>
 
         {/* Tabs */}
-          <div className="flex gap-4 px-6 mb-4">
-    <Link
-      to="/login"
-      className={`flex-1 text-center py-2 text-lg font-semibold rounded-lg transition-colors ${
-        activeTab === "login"
-          ? "bg-blue-50 text-blue-500"
-          : "bg-transparent text-gray-400"
-      }`}
-    >
-      Login
-    </Link>
+        <div className="flex gap-4 px-6 mb-2">
+          <Link
+            to="/login"
+            className={`flex-1 text-center py-2 text-lg font-semibold rounded-lg transition-colors ${
+              activeTab === "login"
+                ? "bg-blue-50 text-blue-500"
+                : "bg-transparent text-gray-400"
+            }`}
+          >
+            Login
+          </Link>
 
-    <Link
-      to="/signup"
-      className={`flex-1 text-center py-2 text-lg font-semibold rounded-lg transition-colors ${
-        activeTab === "signup"
-          ? "bg-blue-50 text-blue-500"
-          : "bg-transparent text-gray-400"
-      }`}
-    >
-      Sign Up
-    </Link>
-  </div>
+          <Link
+            to="/signup"
+            className={`flex-1 text-center py-2 text-lg font-semibold rounded-lg transition-colors ${
+              activeTab === "signup"
+                ? "bg-blue-50 text-blue-500"
+                : "bg-transparent text-gray-400"
+            }`}
+          >
+            Sign Up
+          </Link>
+        </div>
 
         {/* Form */}
         <div className="px-6 flex-grow overflow-y-auto pb-4 scrollbar-hide">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Create an account</h2>
-          <p className="text-gray-600 mb-4 text-sm">
+          <h2 className="text-xl font-bold text-gray-900 mb-1">
+            Create an account
+          </h2>
+          <p className="text-gray-600 mb-2 text-sm">
             Build your profile, connect with peers, and discover jobs.
           </p>
 
           {/* Full Name */}
           <div className="mb-3">
-            <label className="block text-sm text-gray-400 mb-1">Full Name</label>
+            <label className="block text-sm text-gray-400 mb-1">
+              Full Name
+            </label>
             <input
               type="text"
               value={fullName}
@@ -87,7 +140,7 @@ const Signup = () => {
             <label className="block text-sm text-gray-400 mb-1">Password</label>
             <div className="relative">
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -97,17 +150,23 @@ const Signup = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
           </div>
 
           {/* Confirm Password */}
           <div className="mb-3">
-            <label className="block text-sm text-gray-400 mb-1">Confirm Password</label>
+            <label className="block text-sm text-gray-400 mb-1">
+              Confirm Password
+            </label>
             <div className="relative">
               <input
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -117,9 +176,29 @@ const Signup = () => {
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
               >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showConfirmPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
+          </div>
+
+          {/* User Role */}
+          <div className="mb-3">
+            <label className="block text-sm text-gray-400 mb-1">
+              User Role
+            </label>
+            <select
+              className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="jobseeker">Job Seeker</option>
+              <option value="employer">Employer</option>
+              <option value="company">Company</option>
+            </select>
           </div>
 
           {/* Terms */}
@@ -139,16 +218,16 @@ const Signup = () => {
           <button
             onClick={handleSignUp}
             disabled={loading}
-            className={`w-full py-3 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 transition-colors mb-4 ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
+            className={`w-full py-3 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 transition-colors mb-2 ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {loading ? 'Signing Up...' : 'Sign Up'}
+            {loading ? "Signing Up..." : "Sign Up"}
           </button>
 
           {/* Social Login */}
           <div className="text-center">
-            <p className="text-gray-600 mb-6">Or Sign Up With</p>
+            <p className="text-gray-600 mb-2">Or Sign Up With</p>
             <div className="flex justify-center gap-8">
               {/* Google */}
               <button className="flex flex-col items-center gap-2">
@@ -203,7 +282,6 @@ const Signup = () => {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

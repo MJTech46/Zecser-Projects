@@ -42,7 +42,16 @@ class EmployerListView(generics.ListAPIView):
     def get_queryset(self):
         return UserProfile.objects.filter(user__role="employer")
 
+# my company profile (for the logged-in user)
+class MyCompanyProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = CompanyProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_object(self):
+        try:
+            return CompanyProfile.objects.get(created_by=self.request.user)
+        except CompanyProfile.DoesNotExist:
+            raise NotFound("Company profile not found for this user.")
 
 # Get all companies
 class CompanyListView(generics.ListAPIView):

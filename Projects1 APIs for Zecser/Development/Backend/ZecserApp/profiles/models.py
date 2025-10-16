@@ -20,11 +20,15 @@ class CompanyProfile(models.Model):
     company_website = models.URLField(blank=True, null=True)
     company_description = models.TextField(blank=True, null=True)
     company_logo = models.ImageField(upload_to="company_logos/", blank=True, null=True)
+    company_cover = models.ImageField(upload_to="company_covers/", blank=True, null=True)
+
     
     # Extra fields
     location = models.CharField(max_length=255, blank=True, null=True)
     founded_year = models.PositiveIntegerField(blank=True, null=True)
     employee_count = models.PositiveIntegerField(blank=True, null=True)
+    company_overview = models.TextField(blank=True, null=True)
+    company_services = models.TextField(blank=True, null=True)
 
     # only "company" users can own companies
     created_by = models.OneToOneField(
