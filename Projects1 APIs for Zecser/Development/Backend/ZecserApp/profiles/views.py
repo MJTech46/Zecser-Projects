@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 
 from accounts.models import User
 from .models import UserProfile, CompanyProfile, Follow
