@@ -7,6 +7,7 @@ import UserProfile from "./pages/UserProfile";
 import CompanyProfile from "./pages/CompanyProfile";
 import EditCompanyProfile from "./pages/EditCompanyProfile";
 import Home from "./pages/Home";
+import NetworkPage from "./pages/NetworkPage";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/UserProfile" element={<UserProfile />} />
         <Route path="/CompanyProfile" element={<CompanyProfile />} />
         <Route path="/EditCompanyProfile" element={<EditCompanyProfile />} />
+        <Route path="/NetworkPage" element={<NetworkPage />} />
         <Route path="/" element={<Home />} />
       </Routes>
     </Router>
